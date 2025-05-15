@@ -223,25 +223,11 @@ public class UploadFileRemoteOperation extends RemoteOperation<String> {
 
             putMethod.setRequestEntity(entity);
 
-            if (OwnCloudClientManagerFactory.getHASH_check()) {
-                try {
-                    MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-                    try (FileInputStream fis = new FileInputStream(f);
-                         DigestInputStream dis = new DigestInputStream(fis, md)) {
-                        byte[] buffer = new byte[8192];
-                        while (dis.read(buffer) != -1) {
-                            // digest is updated by reading
-                        }
-                    }
-
-                    String Hash = String.format("%064x", new BigInteger(1, md.digest()));
-                    putMethod.addRequestHeader("X-Content-Hash", Hash);
-                } catch (Exception e) {
-                    Log_OC.w(this, "Could not compute chunk hash");
-                }
+            String Hash = FileUtils.getHASHfromFile(this, f);
+            if(Hash != null){
+                putMethod.addRequestHeader("X-Content-Hash", Hash);
             }
-
+            
             status = client.executeMethod(putMethod);
 
             result = new RemoteOperationResult<>(isSuccess(status), putMethod);
