@@ -169,7 +169,7 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
                                             continue;
                                     }
                                     
-                                    String FileHash = FileUtils.getHASHfromFile(this, targetFile);
+                                    String FileHash = FileUtils.getHASHfromFile(this, targetFile, digestAlgorithm);
 
                                     if (!hash.equalsIgnoreCase(FileHash)) {
                                         // Hash is incorrect: delete file and abort
