@@ -168,18 +168,8 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
                                             // Skip unknown algorithm
                                             continue;
                                     }
-
-                                    MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
-
-                                    try (FileInputStream fis = new FileInputStream(targetFile);
-                                         DigestInputStream dis = new DigestInputStream(fis, md)) {
-                                        byte[] buffer = new byte[8192];
-                                        while (dis.read(buffer) != -1) {
-                                            // digest is updated by reading
-                                        }
-                                    }
-
-                                    String FileHash = String.format("%064x", new BigInteger(1, md.digest()));
+                                    
+                                    String FileHash = FileUtils.getHASHfromFile(this, targetFile);
 
                                     if (!hash.equalsIgnoreCase(FileHash)) {
                                         // Hash is incorrect: delete file and abort
