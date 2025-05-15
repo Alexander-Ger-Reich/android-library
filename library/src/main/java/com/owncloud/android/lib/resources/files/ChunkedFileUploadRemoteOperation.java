@@ -9,6 +9,7 @@ package com.owncloud.android.lib.resources.files;
 import android.text.TextUtils;
 
 import com.owncloud.android.lib.common.OwnCloudClient;
+import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.network.ChunkFromFileChannelRequestEntity;
 import com.owncloud.android.lib.common.network.ProgressiveDataTransfer;
 import com.owncloud.android.lib.common.network.WebdavEntry;
@@ -221,22 +222,24 @@ public class ChunkedFileUploadRemoteOperation extends UploadFileRemoteOperation 
             moveMethod = new MoveMethod(originUri, destinationUri, true);
             moveMethod.addRequestHeader(OC_X_OC_MTIME_HEADER, String.valueOf(lastModificationTimestamp));
 
-            try {
-                File file_hash = new File(localPath);
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                
-                try (FileInputStream fis = new FileInputStream(file_hash);
-                     DigestInputStream dis = new DigestInputStream(fis, md)) {
+            if (OwnCloudClientManagerFactory.getHASH_check()) {
+                try {
+                    File file_hash = new File(localPath);
+                    MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+                    try (FileInputStream fis = new FileInputStream(file_hash);
+                         DigestInputStream dis = new DigestInputStream(fis, md)) {
                         byte[] buffer = new byte[8192];
                         while (dis.read(buffer) != -1) {
-                        // digest is updated by reading
+                            // digest is updated by reading
+                        }
                     }
-                }
 
-                String Hash = String.format("%064x", new BigInteger(1, md.digest()));
-                moveMethod.addRequestHeader("X-Content-Hash", Hash);
-            } catch (Exception e) {
-                Log_OC.w(TAG, "Could not compute chunk hash");
+                    String Hash = String.format("%064x", new BigInteger(1, md.digest()));
+                    moveMethod.addRequestHeader("X-Content-Hash", Hash);
+                } catch (Exception e) {
+                    Log_OC.w(TAG, "Could not compute chunk hash");
+                }
             }
 
             if (creationTimestamp != null && creationTimestamp > 0) {
@@ -314,20 +317,22 @@ public class ChunkedFileUploadRemoteOperation extends UploadFileRemoteOperation 
                 putMethod.addRequestHeader(E2E_TOKEN, token);
             }
 
-            try (RandomAccessFile hashRaf = new RandomAccessFile(file, "r")){
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
+            if (OwnCloudClientManagerFactory.getHASH_check()) {
+                try (RandomAccessFile hashRaf = new RandomAccessFile(file, "r")) {
+                    MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-                FileChannel hashChannel = hashRaf.getChannel();
-                ByteBuffer buf = ByteBuffer.allocate((int)chunk.getLength());
-                hashChannel.position(chunk.getStart());
-                hashChannel.read(buf);
-                md.update(buf.array());
+                    FileChannel hashChannel = hashRaf.getChannel();
+                    ByteBuffer buf = ByteBuffer.allocate((int) chunk.getLength());
+                    hashChannel.position(chunk.getStart());
+                    hashChannel.read(buf);
+                    md.update(buf.array());
 
-                String chunkHash = String.format("%064x", new BigInteger(1, md.digest()));
+                    String chunkHash = String.format("%064x", new BigInteger(1, md.digest()));
 
-                putMethod.addRequestHeader("X-Content-Hash", chunkHash);
-            } catch (Exception e) {
-                Log_OC.w(TAG, "Could not compute chunk hash");
+                    putMethod.addRequestHeader("X-Content-Hash", chunkHash);
+                } catch (Exception e) {
+                    Log_OC.w(TAG, "Could not compute chunk hash");
+                }
             }
 
             status = client.executeMethod(putMethod);

@@ -7,6 +7,7 @@
 package com.owncloud.android.lib.resources.files;
 
 import com.owncloud.android.lib.common.OwnCloudClient;
+import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.network.OnDatatransferProgressListener;
 import com.owncloud.android.lib.common.network.WebdavUtils;
 import com.owncloud.android.lib.common.operations.OperationCancelledException;
@@ -27,6 +28,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import java.io.FileInputStream;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.math.BigInteger;
+import java.util.Locale;
+
+import androidx.annotation.NonNull;
+
 
 /**
  * Remote operation performing the download of a remote file in the ownCloud server.
@@ -82,7 +92,7 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
     }
 
 
-    private int downloadFile(OwnCloudClient client, File targetFile) throws IOException, OperationCancelledException, CreateLocalFileException {
+    private int downloadFile(@NonNull OwnCloudClient client, File targetFile) throws IOException, OperationCancelledException, CreateLocalFileException {
         int status;
         boolean savedFile = false;
         getMethod = new GetMethod(client.getFilesDavUri(remotePath));
@@ -135,8 +145,64 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
                     transferEncoding = "chunked".equals(transferEncodingHeader.getValue());
                 }
                 
-                if (transferred == totalToTransfer || transferEncoding) {  
-                    savedFile = true;
+                if (transferred == totalToTransfer || transferEncoding) {
+                    if (OwnCloudClientManagerFactory.getHASH_check()){
+                        Header hashHeader = getMethod.getResponseHeader("X-Content-Hash");
+                        String expectedHash = hashHeader != null ? hashHeader.getValue() : null;
+                        if (expectedHash != null) {
+                            try {
+                                String[] entries = expectedHash.split(",");
+                                for (String entry : entries) {
+                                    String[] parts = entry.split(";", 2);
+                                    if (parts.length != 2) continue;
+                                    String Algorithm  = parts[0].trim().toLowerCase(Locale.ROOT);
+                                    String hash  = parts[1].trim();
+
+                                    String digestAlgorithm = null;
+
+                                    switch (Algorithm) {
+                                        case "sha-256":
+                                            digestAlgorithm = "SHA-256";
+                                            break;
+                                        default:
+                                            // unbekanntes Algo überspringen
+                                            continue;
+                                    }
+
+                                    MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
+
+                                    try (FileInputStream fis = new FileInputStream(targetFile);
+                                         DigestInputStream dis = new DigestInputStream(fis, md)) {
+                                        byte[] buffer = new byte[8192];
+                                        while (dis.read(buffer) != -1) {
+                                            // digest is updated by reading
+                                        }
+                                    }
+
+                                    String FileHash = String.format("%064x", new BigInteger(1, md.digest()));
+
+                                    if (!hash.equalsIgnoreCase(FileHash)) {
+                                        // Hash stimmt nicht: Datei löschen und Abbruch
+                                        Log_OC.w(TAG, "Hash mismatch: expected="+ hash +" actual="+ FileHash);
+                                        status = 418;
+                                        savedFile = false;
+                                    }else{
+                                        savedFile = true;
+                                        break;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log_OC.w(TAG, "Could not compute chunk hash");
+                                status = 418;
+                                savedFile = false;
+                            }
+                        }else {
+                            savedFile = true;
+                        }
+                    }else {
+                        savedFile = true;
+                    }
+
                     Header modificationTime = getMethod.getResponseHeader("Last-Modified");
                     if (modificationTime == null) {
                         modificationTime = getMethod.getResponseHeader("last-modified");
