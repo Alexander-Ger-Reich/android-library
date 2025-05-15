@@ -223,7 +223,7 @@ public class ChunkedFileUploadRemoteOperation extends UploadFileRemoteOperation 
             moveMethod.addRequestHeader(OC_X_OC_MTIME_HEADER, String.valueOf(lastModificationTimestamp));
 
 
-            String Hash = FileUtils.getHASHfromFile(this, new File(localPath));
+            String Hash = FileUtils.getHASHfromFile(this, new File(localPath), "SHA-256");
             if(Hash != null){
                 putMethod.addRequestHeader("X-Content-Hash", Hash);
             }
