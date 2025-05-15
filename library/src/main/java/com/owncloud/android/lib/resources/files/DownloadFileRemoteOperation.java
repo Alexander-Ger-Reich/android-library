@@ -165,7 +165,7 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
                                             digestAlgorithm = "SHA-256";
                                             break;
                                         default:
-                                            // unbekanntes Algo überspringen
+                                            // Skip unknown algorithm
                                             continue;
                                     }
 
@@ -182,7 +182,7 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
                                     String FileHash = String.format("%064x", new BigInteger(1, md.digest()));
 
                                     if (!hash.equalsIgnoreCase(FileHash)) {
-                                        // Hash stimmt nicht: Datei löschen und Abbruch
+                                        // Hash is incorrect: delete file and abort
                                         Log_OC.w(TAG, "Hash mismatch: expected="+ hash +" actual="+ FileHash);
                                         status = 418;
                                         savedFile = false;
