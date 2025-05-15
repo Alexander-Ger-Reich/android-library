@@ -12,6 +12,7 @@ package com.owncloud.android.lib.resources.files;
 import androidx.annotation.VisibleForTesting;
 
 import com.owncloud.android.lib.common.OwnCloudClient;
+import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.network.FileRequestEntity;
 import com.owncloud.android.lib.common.network.OnDatatransferProgressListener;
 import com.owncloud.android.lib.common.network.ProgressiveDataTransfer;
@@ -222,21 +223,23 @@ public class UploadFileRemoteOperation extends RemoteOperation<String> {
 
             putMethod.setRequestEntity(entity);
 
-            try {
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                
-                try (FileInputStream fis = new FileInputStream(f);
-                     DigestInputStream dis = new DigestInputStream(fis, md)) {
-                    byte[] buffer = new byte[8192];
-                    while (dis.read(buffer) != -1) {
-                        // digest is updated by reading
-                    }
-                }
+            if (OwnCloudClientManagerFactory.getHASH_check()) {
+                try {
+                    MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-                String Hash = String.format("%064x", new BigInteger(1, md.digest()));
-                putMethod.addRequestHeader("X-Content-Hash", Hash);
-            } catch (Exception e) {
-                Log_OC.w(this, "Could not compute chunk hash");
+                    try (FileInputStream fis = new FileInputStream(f);
+                         DigestInputStream dis = new DigestInputStream(fis, md)) {
+                        byte[] buffer = new byte[8192];
+                        while (dis.read(buffer) != -1) {
+                            // digest is updated by reading
+                        }
+                    }
+
+                    String Hash = String.format("%064x", new BigInteger(1, md.digest()));
+                    putMethod.addRequestHeader("X-Content-Hash", Hash);
+                } catch (Exception e) {
+                    Log_OC.w(this, "Could not compute chunk hash");
+                }
             }
 
             status = client.executeMethod(putMethod);
