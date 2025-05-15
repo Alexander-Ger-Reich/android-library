@@ -24,10 +24,10 @@ public class FileUtils {
 
     public static final String PATH_SEPARATOR = "/";
 
-    public static String getHASHfromFile(UploadFileRemoteOperation thi, File f) {
+    public static String getHASHfromFile(UploadFileRemoteOperation thi, File f, String digestAlgorithm) {
         if (OwnCloudClientManagerFactory.getHASH_check()) {
             try {
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
 
                 try (FileInputStream fis = new FileInputStream(f);
                      DigestInputStream dis = new DigestInputStream(fis, md)) {
