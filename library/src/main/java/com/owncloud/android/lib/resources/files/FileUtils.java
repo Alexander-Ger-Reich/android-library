@@ -36,7 +36,6 @@ public class FileUtils {
                         // digest is updated by reading
                     }
                 }
-
                 return String.format("%064x", new BigInteger(1, md.digest()));
             } catch (Exception e) {
                 Log_OC.w(thi, "Could not compute chunk hash");
