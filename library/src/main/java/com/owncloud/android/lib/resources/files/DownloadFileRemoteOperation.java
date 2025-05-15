@@ -92,7 +92,7 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
     }
 
 
-    private int downloadFile(@NonNull OwnCloudClient client, File targetFile) throws IOException, OperationCancelledException, CreateLocalFileException {
+    private int downloadFile(OwnCloudClient client, File targetFile) throws IOException, OperationCancelledException, CreateLocalFileException {
         int status;
         boolean savedFile = false;
         getMethod = new GetMethod(client.getFilesDavUri(remotePath));
