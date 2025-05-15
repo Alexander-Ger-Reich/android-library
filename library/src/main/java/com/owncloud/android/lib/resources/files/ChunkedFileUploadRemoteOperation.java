@@ -302,7 +302,7 @@ public class ChunkedFileUploadRemoteOperation extends UploadFileRemoteOperation 
                 putMethod.addRequestHeader(E2E_TOKEN, token);
             }
 
-            if (OwnCloudClientManagerFactory.getHASH_check()) {
+            if (OwnCloudClientManagerFactory.getHASHcheck()) {
                 try (RandomAccessFile hashRaf = new RandomAccessFile(file, "r")) {
                     MessageDigest md = MessageDigest.getInstance("SHA-256");
 

@@ -25,7 +25,7 @@ public class FileUtils {
     public static final String PATH_SEPARATOR = "/";
 
     public static String getHASHfromFile(Object thi, File f, String digestAlgorithm) {
-        if (OwnCloudClientManagerFactory.getHASH_check()) {
+        if (OwnCloudClientManagerFactory.getHASHcheck()) {
             try {
                 MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
 
