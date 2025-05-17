@@ -37,8 +37,6 @@ import java.util.Objects;
 
 import androidx.annotation.VisibleForTesting;
 
-import java.io.FileInputStream;
-import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.nio.ByteBuffer;
 import java.math.BigInteger;

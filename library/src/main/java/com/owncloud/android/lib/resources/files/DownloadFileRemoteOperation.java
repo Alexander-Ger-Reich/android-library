@@ -29,14 +29,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import java.io.FileInputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.math.BigInteger;
 import java.util.Locale;
-
-import androidx.annotation.NonNull;
-
 
 /**
  * Remote operation performing the download of a remote file in the ownCloud server.
@@ -161,14 +154,15 @@ public class DownloadFileRemoteOperation extends RemoteOperation {
                                     String digestAlgorithm = null;
 
                                     switch (Algorithm) {
-                                        case "sha-256":
+                                        case "sha256":
+
                                             digestAlgorithm = "SHA-256";
                                             break;
                                         default:
                                             // Skip unknown algorithm
                                             continue;
                                     }
-                                    
+
                                     String FileHash = FileUtils.getHASHfromFile(this, targetFile, digestAlgorithm);
 
                                     if (!hash.equalsIgnoreCase(FileHash)) {
